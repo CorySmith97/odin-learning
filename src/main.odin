@@ -4,6 +4,6 @@ import "core:fmt"
 import rl "vendor:raylib"
 
 main :: proc() {
-    a: App
-    app_init(&a)
+    gs: Game_State
+    game_run(&gs)
 }

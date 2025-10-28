@@ -1,107 +1,77 @@
 package main
 
+import "core:thread"
 import rl "vendor:raylib"
-import "core:prof/spall"
 
-App_Mode :: enum {
-	editor,
-	game,
+Game_Mode :: enum {
+    player,
+    editor,
 }
 
-App :: struct {
-	tick_delta: f64,
-	mode:       App_Mode,
-	scene:      Scene,
+Game_State :: struct {
+    width: i32,
+    height: i32,
+    delta: f32,
+    camera: rl.Camera2D,
 }
 
-app_init :: proc(app: ^App) {
-	app^ = {
-		tick_delta = 0,
-	}
+game_run :: proc(gs: ^Game_State) {
+    gs.width = DEFAULT_WIDTH
+    gs.height = DEFAULT_HEIGHT
+    rl.InitWindow(gs.width, gs.height, "Name")
 
-    n := Node{
-        pos = {10, 10},
-        color = rl.BLUE,
-    }
-	rl.InitWindow(1200, 720, "RPG")
-	rl.SetTargetFPS(60)
-
-    s: Scene
-    s.tiles = make([dynamic]Tile)
-    s.camera = rl.Camera2D {
-        offset = {f32(rl.GetScreenWidth()/2), f32(rl.GetScreenHeight()/2)},
+    gs.camera = {
         target = {},
-        rotation = 0.0,
-        zoom = 1.0
+        offset = {},
+        rotation = 0,
+        zoom = 1.0,
     }
 
-    //editor_init()
-
-    for i in 0..<100 {
-        append(&s.tiles, Tile{
-            pos = {f32(i % 10), f32(i / 10)},
-            texture = load_texture("tile_001.png")
-        })
+    test_map := Map{
+        width = 10,
+        height = 10,
+        texture_layers = make([dynamic]Texture),
+        entities = make([dynamic]Entity),
+        walk_grid = make([dynamic]Floor_Condition),
+        party = {entities = make([dynamic]Entity)},
     }
+
+    append(&test_map.party.entities, Entity{position = {10, 10},texture_tint=rl.RED})
 
     ui_setup()
+    editor_setup()
+    //audio_init()
 
-	for !rl.WindowShouldClose() {
+    for !rl.WindowShouldClose() {
+
+        gs.delta = rl.GetFrameTime()
         if rl.IsKeyPressed(rl.KeyboardKey.EIGHT) {
-            app.mode = .game
+            rl.EnableCursor()
         }
         if rl.IsKeyPressed(rl.KeyboardKey.NINE) {
-            app.mode = .editor
+            rl.DisableCursor()
         }
-        camera_movement(&s.camera)
 
-        // UI Handling/ prep
+        if rl.IsMouseButtonDown(.MIDDLE) {
+            mouse_delta := rl.GetMouseDelta()
+            gs.camera.offset += mouse_delta
+        }
+
+        update_party(&test_map.party, gs.camera)
+
         ui_handle_input()
         ui_new_frame()
-        if app.mode == .editor {
-            editor_draw(&s)
-        }
+        editor_draw(gs)
         ui_end_frame()
 
-        // Drawing
-		rl.ClearBackground(PALETTE_BASE_1)
-		rl.BeginDrawing()
-        rl.BeginMode2D(s.camera)
-        scene_draw(&s)
+        rl.BeginDrawing()
+        rl.ClearBackground(rl.RAYWHITE)
+        rl.BeginMode2D(gs.camera)
+
+        draw_map(&test_map)
+        draw_party(&test_map.party, gs.camera)
         rl.EndMode2D()
-        //editor_draw_available_textures(rl.Rectangle{30, 100, 200, 300})
         ui_render()
-		rl.EndDrawing()
-	}
-}
-
-camera_movement :: proc(camera: ^rl.Camera2D) {
-    if rl.IsKeyDown(rl.KeyboardKey.UP) {
-        camera.target.y -= 5.0
-    }
-    if rl.IsKeyDown(rl.KeyboardKey.DOWN) {
-        camera.target.y += 5.0
-    }
-    if rl.IsKeyDown(rl.KeyboardKey.LEFT) {
-        camera.target.x -= 5.0
-    }
-    if rl.IsKeyDown(rl.KeyboardKey.RIGHT) {
-        camera.target.x += 5.0
-    }
-
-    if rl.IsMouseButtonDown(rl.MouseButton.MIDDLE) {
-        delta := rl.GetMouseDelta()
-        camera.offset += delta
-    }
-
-    mouse_wheel := rl.GetMouseWheelMove()
-    if mouse_wheel != 0 {
-        // Apply zoom change first
-        camera.zoom += CAMERA_MOVEMENT_SPEED * mouse_wheel
-
-        // Clamp to a minimum zoom
-        if camera.zoom < 0.1 {
-            camera.zoom = 0.1
-        }
+        rl.EndDrawing()
     }
 }

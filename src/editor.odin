@@ -5,52 +5,48 @@ import mui"vendor:microui"
 import "core:fmt"
 import "core:os"
 
+@(private="file")
 editor_state := struct {
-    tile_selected: bool,
-    selected_tile: ^Tile,
+    current_console_index: i32,
+    console_buf: [dynamic]string,
+    console_input_len: int,
+    console_open: bool,
+    main_editor_open: bool,
 }{}
 
-editor_draw :: proc(s: ^Scene) {
-    // Main menu
-    if mui.window(&ui_state.ctx, "Main menu", {0, 0, rl.GetScreenWidth(), 30}, {.NO_TITLE, .NO_RESIZE}) {
-        if .SUBMIT in mui.button(&ui_state.ctx, "File") {
+Brush_Type :: enum {
+    erase,
+    zoning,
+}
+
+Brush :: struct {
+    type: Brush_Type,
+    size: u32,
+    position: rl.Vector2,
+    active: bool,
+}
+
+editor_setup :: proc() {
+    editor_state.current_console_index = 0
+    editor_state.console_buf = make([dynamic]string)
+}
+
+editor_draw :: proc(gs: ^Game_State) {
+    if rl.IsKeyPressed(.GRAVE) {
+        editor_state.console_open = !editor_state.console_open
+    }
+
+    if mui.window(&ui_state.ctx, "Editor", {20, 40, 200, 200}) {
+        mui.label(&ui_state.ctx, "Test label")
+        mui.text(&ui_state.ctx, fmt.tprint("FPS: ", gs.delta * 1000 * 60))
+        if .ACTIVE in mui.header(&ui_state.ctx, "Brush") {
         }
     }
 
-    if mui.window(&ui_state.ctx, "App Info", {10, 80, 200, 200}, {}) {
-        if .ACTIVE in mui.header(&ui_state.ctx, "Mouse State") {
-            mouse_world_pos := mouse_to_world(s.camera)
-            mui.text(&ui_state.ctx, fmt.tprint("Grid Space\n", mouse_world_pos.x, mouse_world_pos.y))
-        }
-
-        if .ACTIVE in mui.header(&ui_state.ctx, "Scene") {
-            mui.text(&ui_state.ctx, fmt.tprint("This is scene info"))
+    if editor_state.console_open {
+        if mui.window(&ui_state.ctx, "Console", {10, 10, 200, 300}) {
+            // @todo:cs Add console
         }
     }
-}
 
-editor_init :: proc () {
-        tile_dir, tile_ok := os.open("assets/tiles")
-        if tile_ok != nil {
-            panic("Failed to open assets dir")
-        }
-        rl.ChangeDirectory("assets/tiles")
-        tiles, _ := os.read_dir(tile_dir, 0)
-        for file in tiles {
-            load_texture(file.name)
-        }
-        fmt.printf("texture count: %d\n", len(textures))
-        assets_dir, ok := os.open("../entities")
-        if ok != nil {
-            panic("Failed to open assets dir")
-        }
-        rl.ChangeDirectory("../entities")
-        entities, _ := os.read_dir(assets_dir, 0)
-        for file in entities {
-            load_texture(file.name)
-        }
-}
-
-editor_draw_available_textures :: proc(rec: rl.Rectangle) {
-    rl.DrawRectangleRec(rec, PALETTE_BASE_2)
 }

@@ -17,10 +17,10 @@ ui_state := struct {
 
     atlas_texture: rl.Texture2D,
 }{
-    bg = transmute(mui.Color)PALETTE_BASE_2,
 }
 
 ui_setup :: proc() {
+    ui_state.bg = transmute(mui.Color)PALETTE_BASE_2
     pixels := make([][4]u8, mui.DEFAULT_ATLAS_WIDTH*mui.DEFAULT_ATLAS_HEIGHT)
     for alpha, i in mui.default_atlas_alpha {
         pixels[i] = {0xff, 0xff, 0xff, alpha}

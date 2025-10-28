@@ -4,6 +4,9 @@ import rl"vendor:raylib"
 
 CAMERA_MOVEMENT_SPEED :: 0.5
 
+DEFAULT_WIDTH :: 1200
+DEFAULT_HEIGHT :: 720
+
 TILE_WIDTH :: 32
 TILE_HEIGHT ::16
 
