@@ -32,11 +32,14 @@ game_run :: proc(gs: ^Game_State) {
         height = 10,
         texture_layers = make([dynamic]Texture),
         entities = make([dynamic]Entity),
-        walk_grid = make([dynamic]Floor_Condition),
+        walk_grid = make([dynamic]Floor_Condition, 100, 100),
         party = {entities = make([dynamic]Entity)},
     }
 
-    append(&test_map.party.entities, Entity{position = {10, 10},texture_tint=rl.RED})
+    append(&test_map.party.entities, Entity{position = {10, 10},texture_tint=rl.RED, speed = 150})
+    for &tile in test_map.walk_grid {
+        tile = .walk
+    }
 
     ui_setup()
     editor_setup()
@@ -69,6 +72,7 @@ game_run :: proc(gs: ^Game_State) {
         rl.BeginMode2D(gs.camera)
 
         draw_map(&test_map)
+        editor_draw_map_grid(gs, &test_map)
         draw_party(&test_map.party, gs.camera)
         rl.EndMode2D()
         ui_render()

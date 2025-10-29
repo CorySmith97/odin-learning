@@ -12,6 +12,8 @@ editor_state := struct {
     console_input_len: int,
     console_open: bool,
     main_editor_open: bool,
+    brush_active: bool,
+    brush: Brush,
 }{}
 
 Brush_Type :: enum {
@@ -40,6 +42,14 @@ editor_draw :: proc(gs: ^Game_State) {
         mui.label(&ui_state.ctx, "Test label")
         mui.text(&ui_state.ctx, fmt.tprint("FPS: ", gs.delta * 1000 * 60))
         if .ACTIVE in mui.header(&ui_state.ctx, "Brush") {
+            mui.checkbox(&ui_state.ctx, "Brush Active", &editor_state.brush_active)
+            if mui.popup(&ui_state.ctx, "Brush Type") {
+                mui.label(&ui_state.ctx, "YUM")
+            }
+
+            if .ACTIVE in mui.button(&ui_state.ctx, "Type") {
+                mui.open_popup(&ui_state.ctx, "Brush Type")
+            }
         }
     }
 
@@ -49,4 +59,26 @@ editor_draw :: proc(gs: ^Game_State) {
         }
     }
 
+}
+
+editor_draw_map_grid :: proc(using gs: ^Game_State, m: ^Map) {
+    x: f32 = 0
+    y: f32 = 0
+    for &floor in m.walk_grid {
+        switch (floor) {
+        case .walk: {
+            rl.DrawRectangleRec({x, y, GRID_SIZE, GRID_SIZE}, OPAQUE_GREEN)
+            rl.DrawRectangleLinesEx({x, y, GRID_SIZE, GRID_SIZE}, 2, rl.BLACK)
+        };
+        case .blocked: {
+            rl.DrawRectangleRec({x, y, GRID_SIZE, GRID_SIZE}, OPAQUE_RED)
+            rl.DrawRectangleLinesEx({x, y, GRID_SIZE, GRID_SIZE}, 2, rl.BLACK)
+        };
+        }
+        x += GRID_SIZE
+        if x >= auto_cast m.width * GRID_SIZE {
+            x = 0
+            y += GRID_SIZE
+        }
+    }
 }
